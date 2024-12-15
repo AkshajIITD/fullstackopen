@@ -2,6 +2,26 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import personsService from './services/persons'
 
+const Notification = ({message,add}) => {
+  const notificationStyle = {
+    color : add ? 'green' : 'red',
+    fontStyle : 'italic',
+    fontSize : 20,
+    background : 'lightgrey',
+    borderStyle : 'solid',
+    borderRadius : 5,
+    padding: 10,
+    marginBottom: 10
+  }
+
+  if(message === null) return null
+  return(
+    <div style = {notificationStyle} >
+      {message}
+    </div>
+  )
+}
+
 const Name = (props) => {
   return(
     <div>
@@ -48,6 +68,8 @@ const App = () => {
   const [isDuplicate, setIsDuplicate] = useState(false)
   const [replace, setReplace] = useState(false)
   const [filter, setFilter] = useState('')
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [add,setAdd] = useState(true)
 
   const hook = () => {
     console.log('effect')
@@ -97,8 +119,11 @@ const App = () => {
       const eventHandler = (response) => {
         console.log(response.data)
         setPersons(persons.concat(response.data))
+        setAdd(true)
+        setErrorMessage(`${newName} is Added`)
+        setTimeout(()=> {setErrorMessage(null)} , 5000)
         setNewName('')
-        setNewNumber('')        
+        setNewNumber('')    
       }
       
       const promise = personsService.create(newObject)
@@ -147,7 +172,9 @@ const App = () => {
     if(yes) {
       const promise= personsService.erase(id)
       promise.then(eventHandler).catch(error => {
-        alert(`The person '${name}' was already deleted from the server`)
+        setAdd(false)
+        setErrorMessage(`The person '${name}' was already deleted from the server`)
+        setTimeout(()=> {setErrorMessage(null)} , 5000)
         setPersons(persons.filter(person => person.id !== id))
       })
    }
@@ -155,7 +182,9 @@ const App = () => {
 
   return (
     <div>
-      <h2>Phonebook</h2>
+      <h1>Phonebook</h1>
+
+      <Notification message = {errorMessage} add={add} />
 
       <Filter filter={filter} handleFilterChange={handleFilterChange} />
 
