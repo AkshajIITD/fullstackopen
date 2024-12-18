@@ -1,9 +1,11 @@
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
 morgan.token('body', (request) => JSON.stringify(request.body))
 app.use(morgan(':method :url :res[content-length] - :response-time ms :body'))
@@ -53,6 +55,13 @@ app.get('/api/persons/:id',(request,response) => {
 
 app.delete('/api/persons/:id', (request,response) => {
     const id = request.params.id
+    const personExists =  persons.some(person => person.id=== id)
+
+    if(!personExists){
+      return response.status(400).json({
+        error : 'The person was already deleted from the server'
+      })
+    }
     persons = persons.filter(person => person.id !== id)
     response.status(204).end()
 })
@@ -89,7 +98,7 @@ app.post('/api/persons', (request,response) => {
     response.json(person)
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
