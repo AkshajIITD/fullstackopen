@@ -6,6 +6,7 @@ const app = express()
 
 app.use(express.json())
 app.use(cors())
+app.use(express.static('dist'))
 
 morgan.token('body', (request) => JSON.stringify(request.body))
 app.use(morgan(':method :url :res[content-length] - :response-time ms :body'))
@@ -55,6 +56,7 @@ app.get('/api/persons/:id',(request,response) => {
 
 app.delete('/api/persons/:id', (request,response) => {
     const id = request.params.id
+    console.log(id)
     const personExists =  persons.some(person => person.id=== id)
 
     if(!personExists){
@@ -63,11 +65,12 @@ app.delete('/api/persons/:id', (request,response) => {
       })
     }
     persons = persons.filter(person => person.id !== id)
+    console.log(persons)
     response.status(204).end()
 })
 
 const generateId = () => {
-    return Math.floor(Math.random() * 2 ** 32)
+    return String(Math.floor(Math.random() * 2 ** 32))
 }
 
 app.post('/api/persons', (request,response) => {
