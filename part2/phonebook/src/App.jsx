@@ -166,7 +166,7 @@ const App = () => {
 
     const eventHandler = () => {
       setPersons(persons.filter(person => person.id !== id))
-      console.log(`${name} deleted successfully`)
+      console.log(`${name} is deleted successfully`)
     }
 
     if(yes) {
