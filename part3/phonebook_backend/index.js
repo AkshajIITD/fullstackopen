@@ -45,7 +45,7 @@ app.delete('/api/persons/:id', (request,response,next) => {
   console.log(`deleting person with id : ${id}`)
   Person.findById(id).then(person => {
     if(!person){
-      return response.status(404).json({error : 'the person was laready deleted'})
+      return response.status(404).json({error : 'the person was already deleted'})
     }
     return Person.findByIdAndDelete(id)
   })
