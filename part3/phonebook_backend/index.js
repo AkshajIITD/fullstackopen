@@ -1,6 +1,9 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
+const Person = require('./models/person')
 
 const app = express()
 
@@ -11,97 +14,76 @@ app.use(express.static('dist'))
 morgan.token('body', (request) => JSON.stringify(request.body))
 app.use(morgan(':method :url :res[content-length] - :response-time ms :body'))
 
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
 
 app.get('/info', (request, response) => {
-    const personsCount = persons.length
+  Person.countDocuments({}).then(count => {
     const now = new Date()
     response.send(
-        `<p> Phonebook has infor for ${personsCount} people
-         <p> ${now.toString()} </p>`
+      `<p>Phonebook has info for ${count} people</p>
+      <p>${now.toString()}</p>`
     )
+  })
+
 })
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
 app.get('/api/persons/:id',(request,response) => {
-    const id = request.params.id
-    const person = persons.find((person) => person.id === id)
-    if(person) response.json(person)
-    else response.status(404).end()
+  const id = request.params.id
+  Person.findById(id).then(person => { 
+    response.json(person)
+  })
 })
 
 app.delete('/api/persons/:id', (request,response) => {
-    const id = request.params.id
-    console.log(id)
-    const personExists =  persons.some(person => person.id=== id)
-
-    if(!personExists){
-      return response.status(400).json({
-        error : 'The person was already deleted from the server'
-      })
+  const id = request.params.id
+  console.log(`deleting person with id : ${id}`)
+  Person.findById(id).then(person => {
+    if(!person){
+      return response.status(404).json({error : 'the person was laready deleted'})
     }
-    persons = persons.filter(person => person.id !== id)
-    console.log(persons)
+    return Person.findByIdAndDelete(id)
+  })
+  .then(()=>{
+    console.log(`Person with ID ${id} deleted successfully`)
     response.status(204).end()
+  })
 })
 
-const generateId = () => {
-    return String(Math.floor(Math.random() * 2 ** 32))
-}
 
 app.post('/api/persons', (request,response) => {
-    const body = request.body
-    const personExists =  persons.some(person => person.name.toLowerCase()=== body.name.toLowerCase())
+  const body = request.body
 
-    if(!body.name || !body.number){
-        return response.status(400).json({
-            error : 'name or number is missing'
-        })
+  if(!body.name || !body.number){
+      return response.status(400).json({
+          error : 'name or number is missing'
+      })
+  }
+
+  Person.findOne({name : body.name.toLowerCase()})
+  .then(existingPerson => {
+    if(existingPerson) {
+      return response.status(400).json({error : 'the name already exists in the phonebook'})
     }
 
-    
-    if(personExists){
-        return response.status(400).json({
-            error : 'The name already exists in the phonebook'
-        })
-    }
+    const person = new Person({
+      name : body.name,
+      number : body.number,
+    })
 
-    const person = {
-        name : body.name,
-        number : body.number,
-        id : generateId()
-    }
+    return person.save()
+  })
+  .then(savedPerson => {
+    response.json(savedPerson)
+  })
 
-    persons = persons.concat(person)
-
-    response.json(person)
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
