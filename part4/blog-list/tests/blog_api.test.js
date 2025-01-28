@@ -30,7 +30,39 @@ beforeEach( async () => {
     await BlogObject.save()
 })
 
-test.only('unique indentifier property of blogs is named id', async () => {
+test.only('blog is updated by id', async () => {
+    const blogToUpdate = await Blog.findOne({ title: 'video platform' })
+    const id = blogToUpdate.id
+    const initialLikes = blogToUpdate.likes
+  
+    const updatedBlog = {
+      likes: initialLikes + 1
+    }
+  
+    await api
+      .put(`/api/blogs/${id}`)
+      .send(updatedBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+  
+    const blogsAtEnd = await Blog.find({})
+    const updatedBlogFromDb = blogsAtEnd.find(blog => blog.id === id)
+
+    assert.strictEqual(updatedBlogFromDb.likes, initialLikes + 1)
+  })
+
+test('blog is deleted by id', async () =>{
+    const blogToDelete = await Blog.findOne({title : 'video platform' })
+    const id = blogToDelete.id
+    await api
+    .delete(`/api/blogs/${id}`)
+    .expect(204)
+
+    const blogsAtEnd = await Blog.find({})
+    assert.strictEqual(blogsAtEnd.length,initialBlog.length-1)
+})
+
+test('unique indentifier property of blogs is named id', async () => {
     const response = await api
     .get('/api/blogs') 
     .expect(200)
