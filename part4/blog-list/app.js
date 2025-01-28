@@ -6,6 +6,7 @@ const logger = require('./utils/logger')
 const config = require('./utils/config')
 const notesRouter = require('./controllers/blogs')
 const middleware = require('./utils/middleware')
+require('express-async-errors')
 
 mongoose.set('strictQuery', false)
 
